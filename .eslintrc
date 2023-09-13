@@ -1,0 +1,39 @@
+{
+  "env": {
+    "browser": true,
+    "es6": true
+  },
+  "extends": ["plugin:react/recommended", "plugin:prettier/recommended"],
+  "globals": {
+    "Atomics": "readonly",
+    "SharedArrayBuffer": "readonly"
+  },
+  "parser": "@babel/eslint-parser",
+  "parserOptions": {
+    "ecmaFeatures": {
+      "jsx": true
+    },
+    "ecmaVersion": 2020,
+    "sourceType": "module"
+  },
+  "plugins": ["react"],
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
+  },
+  "rules": {
+    "react/react-in-jsx-scope": "off",
+    "react/display-name": "off",
+    "array-bracket-newline": ["error", "consistent"],
+    "brace-style": ["error", "1tbs"],
+    "array-bracket-spacing": ["error", "never"],
+    "quotes": ["error", "single"],
+    "semi": ["error", "always"],
+    "arrow-parens": 0,
+    "jsx-quotes": ["error", "prefer-double"],
+    "no-var": "error",
+    "no-undef": "error",
+    "no-unused-vars": "warn"
+  }
+}

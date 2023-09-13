@@ -1,0 +1,13 @@
+.container {
+  padding: 10px;
+}
+
+.wrap {
+  margin: 10px 0;
+  display: flex;
+  flex-wrap: wrap;
+
+  img {
+    max-width: 100%;
+  }
+}
