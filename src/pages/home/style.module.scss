@@ -1,13 +1,19 @@
 .container {
-  padding: 10px;
-}
+  .name {
+    margin: 20px 0 10px;
+    text-align: center;
+    font-size: 18px;
+    color: #363636;
+    font-family: cursive;
+  }
 
-.wrap {
-  margin: 10px 0;
-  display: flex;
-  flex-wrap: wrap;
+  .steps {
+    display: flex;
+    width: 100%;
+    justify-content: center;
+  }
 
-  img {
-    max-width: 100%;
+  .content {
+    margin-top: 10px;
   }
 }
