@@ -16,7 +16,6 @@ const useLocalStorage = <T = any>(key: string, initialValue?: T) => {
     try {
       if (value instanceof Function) {
         setStoredValue(prevValue => {
-          console.log(prevValue);
           const valueToStore = value(prevValue);
           window.localStorage.setItem(_key, JSON.stringify(valueToStore));
           return valueToStore;

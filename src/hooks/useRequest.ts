@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import axios, { AxiosResponse, Canceler } from 'axios';
-import { getRandomId, isEmpty } from '@/utils';
 import useDidUpdate from '@/hooks/useDidUpdate';
 
 const clientRequest = axios.create({
@@ -57,7 +56,7 @@ const useRequest = (inputs: any[] = []) => {
     // 规定组件内所有请求都通过 此方法来发送以便维护
     !loading && setLoading(true);
 
-    const _id = getRandomId();
+    const _id = Math.random().toString(36).substring(2);
     const promise = clientRequest(
       Object.assign({ data, url }, config, {
         cancelToken: new axios.CancelToken(cancel => {
@@ -80,7 +79,7 @@ const useRequest = (inputs: any[] = []) => {
     }
 
     delete requests.current[_id];
-    if (isEmpty(requests.current)) {
+    if (Object.keys(requests.current).length === 0) {
       setLoading(false);
     }
 
