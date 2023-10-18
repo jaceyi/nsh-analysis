@@ -4,7 +4,7 @@ import useDidUpdate from '@/hooks/useDidUpdate';
 
 const clientRequest = axios.create({
   method: 'POST',
-  baseURL: 'http://localhost:8888/'
+  baseURL: '/api/'
 });
 
 const COMPONENT_UPDATE_MESSAGE = 'component update';

@@ -139,8 +139,7 @@ const Gang: React.FC<GangProps> = ({ onStepChange }) => {
             columns={[
               {
                 title: '人员',
-                dataIndex: 'name',
-                width: 120
+                dataIndex: 'name'
               },
               {
                 title: '职业',
@@ -150,7 +149,8 @@ const Gang: React.FC<GangProps> = ({ onStepChange }) => {
               {
                 title: '战力',
                 dataIndex: 'number',
-                width: 70
+                width: 70,
+                align: 'right'
               },
               {
                 title: '入帮时间',
