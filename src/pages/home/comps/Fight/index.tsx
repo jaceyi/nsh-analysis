@@ -25,25 +25,13 @@ const Fight: React.FC<FightProps> = ({ onStepChange }) => {
     const base64List = await fileListToBase64List(fileList);
     for (let i = 0; i < base64List.length; i++) {
       const base64 = base64List[i];
-      const params = new URLSearchParams();
-      params.append('image', base64);
-      const [err, res] = await request<{
-        words_result: { words: string }[];
-        error_code?: string;
-        error_msg?: string;
-      }>('/ocr/accurate_basic', params, {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
-        }
-      });
+      const [err, data] = await request<{ words: string }[]>(
+        '/ocr/accurate_basic',
+        { image: base64 }
+      );
       if (!err) {
-        const { error_code, error_msg, words_result } = res.data;
-        if (error_code) {
-          message.error(error_msg);
-          return;
-        }
         setFightNames(fightNames => [
-          ...new Set([...fightNames, ...words_result.map(item => item.words)])
+          ...new Set([...fightNames, ...data.map(item => item.words)])
         ]);
       } else {
         message.error(`图片 ${i + 1} 识别失败`, 3);

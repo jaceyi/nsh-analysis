@@ -31,29 +31,17 @@ const Gang: React.FC<GangProps> = ({ onStepChange }) => {
     const base64List = await fileListToBase64List(fileList);
     for (let i = 0; i < base64List.length; i++) {
       const base64 = base64List[i];
-      const params = new URLSearchParams();
-      params.append('image', base64);
-      const [err, res] = await request<{
-        words_result: { words: string }[];
-        error_code?: string;
-        error_msg?: string;
-      }>('/ocr/accurate_basic', params, {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
-        }
-      });
+      const [err, data] = await request<{ words: string }[]>(
+        '/ocr/accurate_basic',
+        { image: base64 }
+      );
       if (!err) {
-        const data: Partial<GangUser>[] = [];
-        const { error_code, error_msg, words_result } = res.data;
-        if (error_code) {
-          message.error(error_msg);
-          return;
-        }
-        const length = words_result.length;
+        const _data: Partial<GangUser>[] = [];
+        const length = data.length;
         if (
           // 每行七列数据拆分
           length % 7 !== 0 ||
-          words_result.filter(word => POSITIONS.includes(word.words)).length <
+          data.filter(word => POSITIONS.includes(word.words)).length <
             Math.floor(length / 7) // 职业条数小于行条数
         ) {
           message.warning(
@@ -62,14 +50,14 @@ const Gang: React.FC<GangProps> = ({ onStepChange }) => {
           );
           continue;
         }
-        words_result.forEach(({ words }, i) => {
+        data.forEach(({ words }, i) => {
           const remainder = i % 7;
           if (remainder === 0) {
-            data.push({
+            _data.push({
               name: words
             });
           } else {
-            const active = data[data.length - 1];
+            const active = _data[_data.length - 1];
             switch (remainder) {
               case 1:
               case 3:
@@ -95,8 +83,8 @@ const Gang: React.FC<GangProps> = ({ onStepChange }) => {
         });
         setUsers(users => [
           // 过滤重复
-          ...users.filter(user => !data.find(item => item.name === user.name)),
-          ...(data as GangUser[])
+          ...users.filter(user => !_data.find(item => item.name === user.name)),
+          ...(_data as GangUser[])
         ]);
       } else {
         message.error(`图片 ${i + 1} 识别失败`, 3);

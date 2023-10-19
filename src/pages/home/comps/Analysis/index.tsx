@@ -1,10 +1,11 @@
 import React, { useMemo, useState } from 'react';
-import { Button, Table, Space, Tag, Form } from 'antd';
+import { Button, Table, Space, Tag, DatePicker, App } from 'antd';
 import styles from '../../style.module.scss';
-import { useLocalStorage } from '@/hooks';
+import { useLocalStorage, useRequest } from '@/hooks';
 import { GangUser } from '../Gang';
 import leven from 'leven';
 import { tableSorter } from '@/utils';
+import dayjs, { Dayjs } from 'dayjs';
 
 interface FightProps {
   onStepChange: (current: number) => void;
@@ -52,9 +53,130 @@ const Analysis: React.FC<FightProps> = ({ onStepChange }) => {
       });
   }, [gangUsers, fightNames]);
 
-  // modal
-  const [open, setOpen] = useState(false);
-  const [form] = Form.useForm();
+  const total = dataSource.length;
+  const fightTotal = dataSource.filter(item => item.status).length;
+
+  const [request, loading] = useRequest();
+  const [date, setDate] = useState<Dayjs | null>(dayjs());
+  const { message } = App.useApp();
+  const handleExportNotion = async () => {
+    if (!date) {
+      message.warning('请选择日期');
+      return;
+    }
+    const gangName = '揽风月';
+    const [err, data] = await request('/analysis/create', {
+      properties: {
+        名称: {
+          title: [
+            {
+              type: 'text',
+              text: {
+                content: `${gangName}${date.format('YYYY年MM月DD日')}帮战分析`
+              }
+            }
+          ]
+        },
+        帮派: {
+          rich_text: [
+            {
+              text: {
+                content: gangName
+              }
+            }
+          ]
+        },
+        日期: {
+          date: {
+            start: '2023-10-19'
+          }
+        },
+        总人数: {
+          number: total
+        },
+        帮战人数: {
+          number: fightTotal
+        }
+      },
+      children: [
+        {
+          table: {
+            table_width: 3,
+            has_column_header: true,
+            has_row_header: false,
+            children: [
+              {
+                table_row: {
+                  cells: [
+                    [
+                      {
+                        text: {
+                          content: '人员'
+                        }
+                      }
+                    ],
+                    [
+                      {
+                        text: {
+                          content: '入帮时间'
+                        }
+                      }
+                    ],
+                    [
+                      {
+                        text: {
+                          content: '帮战'
+                        }
+                      }
+                    ]
+                  ]
+                }
+              },
+              ...dataSource.map(item => ({
+                table_row: {
+                  cells: [
+                    [
+                      {
+                        text: {
+                          content: item.gangName
+                        }
+                      },
+                      {
+                        type: 'text',
+                        text: {
+                          content: `(${item.fightName})`
+                        },
+                        annotations: {
+                          color: 'gray'
+                        }
+                      }
+                    ],
+                    [
+                      {
+                        text: {
+                          content: item.day
+                        }
+                      }
+                    ],
+                    [
+                      {
+                        text: {
+                          content: item.status ? '✓' : ''
+                        }
+                      }
+                    ]
+                  ]
+                }
+              }))
+            ]
+          }
+        }
+      ]
+    });
+    if (!err) {
+      message.success('导出成功！');
+    }
+  };
 
   return (
     <div>
@@ -72,11 +194,7 @@ const Analysis: React.FC<FightProps> = ({ onStepChange }) => {
         </Space>
       </div>
       <Table
-        title={() => (
-          <p>{`当前总计${dataSource.length}人，参与帮战${
-            dataSource.filter(item => item.status).length
-          }人`}</p>
-        )}
+        title={() => <p>{`当前总计${total}人，参与帮战${fightTotal}人`}</p>}
         className={styles.wrap}
         size="small"
         dataSource={dataSource}
@@ -122,6 +240,30 @@ const Analysis: React.FC<FightProps> = ({ onStepChange }) => {
           }
         ]}
       />
+      <div style={{ marginBottom: 16 }}>
+        <div>
+          <span>日期：</span>
+          <DatePicker
+            value={date}
+            onChange={setDate}
+            style={{ width: 150 }}
+            placement="bottomRight"
+          />
+        </div>
+      </div>
+      <div className="flex-justify-center">
+        <Space>
+          <Button onClick={() => onStepChange(1)}>上一步</Button>
+          <Button
+            type="primary"
+            loading={loading}
+            disabled={!dataSource.length}
+            onClick={handleExportNotion}
+          >
+            导出至 Notion
+          </Button>
+        </Space>
+      </div>
     </div>
   );
 };

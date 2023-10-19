@@ -5,6 +5,8 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import * as config from './config.json';
 
+import 'dayjs/locale/zh-cn';
+
 console.log(`version: ${config.version}`);
 
 const root = ReactDOM.createRoot(document.getElementById('root')!);

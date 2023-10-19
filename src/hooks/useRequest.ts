@@ -6,6 +6,23 @@ const clientRequest = axios.create({
   method: 'POST',
   baseURL: '/api/'
 });
+clientRequest.interceptors.response.use(
+  ({ data }) => {
+    if (data.code === 0) {
+      return data.data;
+    }
+    const message = `${data.code}: ${data.msg}`;
+    alert(message);
+    return Promise.reject(new Error(message));
+  },
+  err => {
+    if (axios.isCancel(err)) {
+      return Promise.reject(err);
+    }
+    alert(err.message);
+    return err;
+  }
+);
 
 const COMPONENT_UPDATE_MESSAGE = 'component update';
 const COMPONENT_UNMOUNT_MESSAGE = 'component unmount';
@@ -46,7 +63,7 @@ const useRequest = (inputs: any[] = []) => {
     url: string,
     data?: object,
     config?: object
-  ): Promise<[null, AxiosResponse<T>]>;
+  ): Promise<[null, AxiosResponse<T>['data']]>;
   async function request<T>(
     url: string,
     data?: object,
