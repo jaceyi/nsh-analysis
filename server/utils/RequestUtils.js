@@ -3,16 +3,26 @@ import { validationResult } from 'express-validator';
 
 export default class RequestUtils {
   static createRequest(options) {
-    const request = axios.create(options);
-    request.interceptors.response.use(
+    const axiosInstance = axios.create(options);
+    axiosInstance.interceptors.response.use(
       res => {
-        return [null, res.data];
+        res.data = [null, res.data];
+        return res;
       },
-      err => {
-        return [err];
-      }
+      err => ({
+        status: 200,
+        statusText: 'Error transformed OK',
+        config: err.config,
+        headers: err.response?.headers,
+        data: [err, err.response?.data]
+      })
     );
-    return request;
+    return {
+      axiosInstance,
+      request: async config => {
+        return (await axiosInstance(config)).data;
+      }
+    };
   }
 
   /**
@@ -22,13 +32,15 @@ export default class RequestUtils {
    * 10001:'Request parameter error'
    * 10002:'Permission error'
    *
-   * @param {string} msg Error message
+   * @param {string} message Error message
+   * @param {object} error Error object
    */
-  static sendError(res, code, msg = 'Unknown error.') {
+  static sendError(res, code, message, error) {
     res.status(200).send(
       JSON.stringify({
         code,
-        msg
+        message,
+        error
       })
     );
   }
@@ -44,7 +56,6 @@ export default class RequestUtils {
 
   static sendValidationError(req, res) {
     const result = validationResult(req);
-    console.log(result.array());
     if (!result.isEmpty()) {
       RequestUtils.sendError(
         res,
@@ -52,7 +63,8 @@ export default class RequestUtils {
         `Request parameter ${result
           .array()
           .map(item => `"${item.path}" is an ${item.msg}`)
-          .join(', ')}`
+          .join(', ')}`,
+        result
       );
       return true;
     }

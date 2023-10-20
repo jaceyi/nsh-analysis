@@ -1,28 +1,44 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import axios, { AxiosResponse, Canceler } from 'axios';
+import axios, { AxiosRequestConfig, AxiosResponse, Canceler } from 'axios';
 import useDidUpdate from '@/hooks/useDidUpdate';
 
-const clientRequest = axios.create({
+const axiosInstance = axios.create({
   method: 'POST',
   baseURL: '/api/'
 });
-clientRequest.interceptors.response.use(
-  ({ data }) => {
+
+// custom interceptors
+axiosInstance.interceptors.response.use(
+  res => {
+    const { data } = res;
     if (data.code === 0) {
-      return data.data;
+      res.data = [null, data.data, res];
+    } else {
+      const message = `${data.code}: ${data.message}`;
+      res.data = [new Error(message), data.data, res];
+      alert(message);
     }
-    const message = `${data.code}: ${data.msg}`;
-    alert(message);
-    return Promise.reject(new Error(message));
+    return res;
   },
   err => {
-    if (axios.isCancel(err)) {
-      return Promise.reject(err);
-    }
     alert(err.message);
-    return err;
+    return {
+      status: 200,
+      statusText: 'Error transformed OK',
+      config: err.config,
+      headers: err.response?.headers,
+      data: [err, err.response?.data]
+    };
   }
 );
+
+type InterceptAxiosResponse<T> =
+  | [Error, T?, AxiosResponse<T>?]
+  | [null, T, AxiosResponse<T>];
+// custom request
+const clientRequest = async <T = any>(config: AxiosRequestConfig) => {
+  return (await axiosInstance<InterceptAxiosResponse<T>>(config)).data;
+};
 
 const COMPONENT_UPDATE_MESSAGE = 'component update';
 const COMPONENT_UNMOUNT_MESSAGE = 'component unmount';
@@ -39,19 +55,17 @@ const useRequest = (inputs: any[] = []) => {
   const requests = useRef<RequestCancelerRef>({});
   const [loading, setLoading] = useState(false);
 
-  const unmount = useRef(false);
   useDidUpdate(() => {
-    handleCancelRequests(COMPONENT_UPDATE_MESSAGE);
+    cancelRequests(COMPONENT_UPDATE_MESSAGE);
   }, inputs);
 
   useEffect(() => {
     return () => {
-      unmount.current = true;
-      handleCancelRequests(COMPONENT_UNMOUNT_MESSAGE);
+      cancelRequests(COMPONENT_UNMOUNT_MESSAGE);
     };
   }, []);
 
-  const handleCancelRequests = (message: string) => {
+  const cancelRequests = (message: string) => {
     const { current } = requests;
 
     for (let key in current) {
@@ -59,22 +73,16 @@ const useRequest = (inputs: any[] = []) => {
     }
   };
 
-  async function request<T>(
+  async function request<T = any>(
     url: string,
     data?: object,
     config?: object
-  ): Promise<[null, AxiosResponse<T>['data']]>;
-  async function request<T>(
-    url: string,
-    data?: object,
-    config?: object
-  ): Promise<[object]>;
-  async function request<T>(url: string, data?: object, config?: object) {
+  ): Promise<InterceptAxiosResponse<T>> {
     // 规定组件内所有请求都通过 此方法来发送以便维护
     !loading && setLoading(true);
 
     const _id = Math.random().toString(36).substring(2);
-    const promise = clientRequest(
+    const [error, response] = await clientRequest<T>(
       Object.assign({ data, url }, config, {
         cancelToken: new axios.CancelToken(cancel => {
           requests.current[_id] = cancel;
@@ -82,17 +90,9 @@ const useRequest = (inputs: any[] = []) => {
       })
     );
 
-    let error: unknown = null;
-    let res: AxiosResponse<T> | null = null;
-
-    try {
-      res = await promise;
-    } catch (err) {
-      // 这里因为组件已经卸载了，就直接返回，不走下面的逻辑了
-      if (axios.isCancel(err) && err.message === COMPONENT_UNMOUNT_MESSAGE) {
-        return [err];
-      }
-      error = err;
+    // 这里因为组件已经卸载了，就直接返回，不走下面的逻辑了
+    if (axios.isCancel(error) && error.message === COMPONENT_UNMOUNT_MESSAGE) {
+      return [error];
     }
 
     delete requests.current[_id];
@@ -100,11 +100,7 @@ const useRequest = (inputs: any[] = []) => {
       setLoading(false);
     }
 
-    if (error) {
-      return [error];
-    } else {
-      return [null, res];
-    }
+    return [error, response] as InterceptAxiosResponse<T>;
   }
   return [useCallback(request, [loading]), loading] as const;
 };

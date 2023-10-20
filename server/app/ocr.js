@@ -7,9 +7,16 @@ const router = express.Router();
 
 const { BAIDU_OCR_AK, BAIDU_OCR_SK } = env;
 
-const request = RequestUtils.createRequest({
+const { axiosInstance, request } = RequestUtils.createRequest({
   method: 'POST',
   baseURL: 'https://aip.baidubce.com'
+});
+axiosInstance.interceptors.response.use(res => {
+  const [, data] = res.data;
+  if (data.object === 'error') {
+    res.data = [new Error(`${data.error_msg} (${data.error_code})`), data];
+  }
+  return res;
 });
 /**
  * 使用 AK，SK 生成鉴权签名（Access Token）
@@ -22,15 +29,6 @@ router.post(
   async (req, res) => {
     if (RequestUtils.sendValidationError(req, res)) return;
 
-    const { image } = req.body;
-    if (!image) {
-      return RequestUtils.sendError(
-        res,
-        10001,
-        'Required parameter "image" is missing'
-      );
-    }
-
     let accessToken;
     {
       /**
@@ -41,21 +39,22 @@ router.post(
         `/oauth/2.0/token?grant_type=client_credentials&client_id=${BAIDU_OCR_AK}&client_secret=${BAIDU_OCR_SK}`
       );
       if (err) {
-        return RequestUtils.sendError(res, 10000, err.message);
+        return RequestUtils.sendError(res, 10000, err.message, data);
       }
       accessToken = data.access_token;
       if (!accessToken) {
         return RequestUtils.sendError(
           res,
           10002,
-          'Failed to obtain the "access_token".'
+          'Failed to obtain the "access_token".',
+          data
         );
       }
     }
 
     {
       const params = new URLSearchParams();
-      params.append('image', image);
+      params.append('image', req.body.image);
       const [err, data] = await request({
         url: `/rest/2.0/ocr/v1/accurate_basic?access_token=${accessToken}`,
         headers: {
@@ -64,7 +63,7 @@ router.post(
         data: params
       });
       if (err) {
-        return RequestUtils.sendError(res, 10000, err.message);
+        return RequestUtils.sendError(res, 10000, err.message, data);
       }
       RequestUtils.send(res, data.words_result);
     }

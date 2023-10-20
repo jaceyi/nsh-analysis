@@ -5,7 +5,14 @@ import { useLocalStorage, useRequest } from '@/hooks';
 import { GangUser } from '../Gang';
 import leven from 'leven';
 import { tableSorter } from '@/utils';
-import dayjs, { Dayjs } from 'dayjs';
+import type { Dayjs } from 'dayjs';
+
+const getTextContent = (text: string, payload?: object) => ({
+  text: {
+    content: text
+  },
+  ...payload
+});
 
 interface FightProps {
   onStepChange: (current: number) => void;
@@ -57,7 +64,8 @@ const Analysis: React.FC<FightProps> = ({ onStepChange }) => {
   const fightTotal = dataSource.filter(item => item.status).length;
 
   const [request, loading] = useRequest();
-  const [date, setDate] = useState<Dayjs | null>(dayjs());
+  const [date, setDate] = useState<Dayjs | null>(null);
+  const [exportUrl, setExportUrl] = useState('');
   const { message } = App.useApp();
   const handleExportNotion = async () => {
     if (!date) {
@@ -65,30 +73,21 @@ const Analysis: React.FC<FightProps> = ({ onStepChange }) => {
       return;
     }
     const gangName = '揽风月';
-    const [err, data] = await request('/analysis/create', {
+    const [err, data] = await request<{ url: string }>('/analysis/create', {
       properties: {
         名称: {
           title: [
-            {
-              type: 'text',
-              text: {
-                content: `${gangName}${date.format('YYYY年MM月DD日')}帮战分析`
-              }
-            }
+            getTextContent(
+              `${gangName}${date.format('YYYY年MM月DD日')}帮战分析`
+            )
           ]
         },
         帮派: {
-          rich_text: [
-            {
-              text: {
-                content: gangName
-              }
-            }
-          ]
+          rich_text: [getTextContent(gangName)]
         },
         日期: {
           date: {
-            start: '2023-10-19'
+            start: date.format('YYYY-MM-DD')
           }
         },
         总人数: {
@@ -101,70 +100,39 @@ const Analysis: React.FC<FightProps> = ({ onStepChange }) => {
       children: [
         {
           table: {
-            table_width: 3,
+            table_width: 5,
             has_column_header: true,
             has_row_header: false,
             children: [
               {
                 table_row: {
                   cells: [
-                    [
-                      {
-                        text: {
-                          content: '人员'
-                        }
-                      }
-                    ],
-                    [
-                      {
-                        text: {
-                          content: '入帮时间'
-                        }
-                      }
-                    ],
-                    [
-                      {
-                        text: {
-                          content: '帮战'
-                        }
-                      }
-                    ]
+                    [getTextContent('人员')],
+                    [getTextContent('职业')],
+                    [getTextContent('战力')],
+                    [getTextContent('入帮时间')],
+                    [getTextContent('帮战')]
                   ]
                 }
               },
-              ...dataSource.map(item => ({
+              ...dataSource.sort(tableSorter('status')).map(item => ({
                 table_row: {
                   cells: [
                     [
-                      {
-                        text: {
-                          content: item.gangName
+                      getTextContent(item.gangName),
+                      getTextContent(
+                        item.status === 2 ? `(${item.fightName})` : '',
+                        {
+                          annotations: {
+                            color: 'gray'
+                          }
                         }
-                      },
-                      {
-                        type: 'text',
-                        text: {
-                          content: `(${item.fightName})`
-                        },
-                        annotations: {
-                          color: 'gray'
-                        }
-                      }
+                      )
                     ],
-                    [
-                      {
-                        text: {
-                          content: item.day
-                        }
-                      }
-                    ],
-                    [
-                      {
-                        text: {
-                          content: item.status ? '✓' : ''
-                        }
-                      }
-                    ]
+                    [getTextContent(item.work)],
+                    [getTextContent(String(item.number))],
+                    [getTextContent(item.day)],
+                    [getTextContent(item.status ? '✅' : '❌')]
                   ]
                 }
               }))
@@ -175,6 +143,7 @@ const Analysis: React.FC<FightProps> = ({ onStepChange }) => {
     });
     if (!err) {
       message.success('导出成功！');
+      setExportUrl(data.url);
     }
   };
 
@@ -216,17 +185,22 @@ const Analysis: React.FC<FightProps> = ({ onStepChange }) => {
             }
           },
           {
+            title: '职业',
+            dataIndex: 'work',
+            width: 46
+          },
+          {
             title: '入帮时间',
             dataIndex: 'day',
             align: 'right',
-            width: 100,
+            width: 90,
             sorter: tableSorter('day')
           },
           {
             title: '帮战',
             dataIndex: 'status',
             align: 'right',
-            width: 80,
+            width: 60,
             sorter: tableSorter('status'),
             render: t =>
               t ? (
@@ -240,7 +214,7 @@ const Analysis: React.FC<FightProps> = ({ onStepChange }) => {
           }
         ]}
       />
-      <div style={{ marginBottom: 16 }}>
+      <div>
         <div>
           <span>日期：</span>
           <DatePicker
@@ -251,7 +225,7 @@ const Analysis: React.FC<FightProps> = ({ onStepChange }) => {
           />
         </div>
       </div>
-      <div className="flex-justify-center">
+      <div className="flex-justify-center" style={{ margin: '16px 0' }}>
         <Space>
           <Button onClick={() => onStepChange(1)}>上一步</Button>
           <Button
@@ -264,6 +238,13 @@ const Analysis: React.FC<FightProps> = ({ onStepChange }) => {
           </Button>
         </Space>
       </div>
+      {exportUrl && (
+        <div className="flex-justify-center">
+          <a href={exportUrl} target="_blank" rel="noopener noreferrer">
+            点此查看导出内容
+          </a>
+        </div>
+      )}
     </div>
   );
 };

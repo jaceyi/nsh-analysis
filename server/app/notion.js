@@ -7,7 +7,7 @@ const router = express.Router();
 
 const { NOTION_API_KEY, NOTION_DATABASE_ID } = env;
 
-const request = RequestUtils.createRequest({
+const { axiosInstance, request } = RequestUtils.createRequest({
   baseURL: 'https://api.notion.com/v1',
   headers: {
     'Content-Type': 'application/json',
@@ -15,12 +15,21 @@ const request = RequestUtils.createRequest({
     Authorization: `Bearer ${NOTION_API_KEY}`
   }
 });
+axiosInstance.interceptors.response.use(res => {
+  const [err, data] = res.data;
+  if (err) {
+    res.data = [new Error(data.message), data];
+  }
+  return res;
+});
 
 router.use(
   '/analysis/create',
   body('properties').notEmpty(),
   body('children').notEmpty(),
   async (req, res) => {
+    if (RequestUtils.sendValidationError(req, res)) return;
+
     const { properties, children } = req.body;
     const [err, data] = await request({
       method: 'post',
@@ -34,7 +43,7 @@ router.use(
       }
     });
     if (err) {
-      return RequestUtils.sendError(res, 10000, err.message);
+      return RequestUtils.sendError(res, 10000, err.message, data);
     }
     RequestUtils.send(res, data);
   }
