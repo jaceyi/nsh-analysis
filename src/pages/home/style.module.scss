@@ -1,33 +1,13 @@
 .container {
-  max-width: 600px;
-  margin: 0 auto;
   overflow: hidden;
+  text-align: center;
+  font-size: 14px;
+  line-height: 1.6;
+  font-weight: 900;
 
-  .name {
-    margin: 20px 0 10px;
-    text-align: center;
-    font-size: 18px;
-    color: #363636;
-  }
-
-  .steps {
-    display: flex;
-    width: 100%;
-    justify-content: center;
-  }
-
-  .content {
-    margin-top: 10px;
-    padding: 10px;
-  }
-}
-
-.wrap {
-  margin: 10px 0;
-
-  tr {
-    td:first-child {
-      font-weight: 800;
-    }
+  .title {
+    margin: 20vh 0 10vh;
+    font-size: 20px;
+    color: #333;
   }
 }

@@ -7,8 +7,6 @@ const router = express.Router();
 
 const { NOTION_API_KEY } = env;
 
-const NOTION_DATABASE_ID = '619d186c141843959512c83b13f9ec9d';
-
 const { axiosInstance, request } = RequestUtils.createRequest({
   baseURL: 'https://api.notion.com/v1',
   headers: {
@@ -25,21 +23,20 @@ axiosInstance.interceptors.response.use(res => {
   return res;
 });
 
-router.use(
+router.post(
   '/analysis/create',
+  body('parent').notEmpty(),
   body('properties').notEmpty(),
   body('children').notEmpty(),
   async (req, res) => {
     if (RequestUtils.sendValidationError(req, res)) return;
 
-    const { properties, children } = req.body;
+    const { parent, properties, children } = req.body;
     const [err, data] = await request({
       method: 'post',
       url: '/pages',
       data: {
-        parent: {
-          database_id: NOTION_DATABASE_ID
-        },
+        parent,
         properties,
         children
       }
@@ -50,5 +47,17 @@ router.use(
     RequestUtils.send(res, data);
   }
 );
+
+router.post('/analysis/retrieve', body('id').notEmpty(), async (req, res) => {
+  if (RequestUtils.sendValidationError(req, res)) return;
+  const [err, data] = await request({
+    method: 'get',
+    url: `/databases/${req.body.id}`
+  });
+  if (err) {
+    return RequestUtils.sendError(res, 10000, err.message, data);
+  }
+  RequestUtils.send(res, data);
+});
 
 export default router;

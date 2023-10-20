@@ -102,7 +102,7 @@ const NotFound = () => {
       </svg>
       <p>页面未找到，请检测路由是否正确</p>
       <div className={styles.tip}>
-        <span className="red">{time}</span> 秒后将返回首页
+        <span className={styles.red}>{time}</span> 秒后将返回首页
       </div>
     </div>
   );

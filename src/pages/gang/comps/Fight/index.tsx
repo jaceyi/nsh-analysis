@@ -8,16 +8,17 @@ import type { GangUser } from '../Gang';
 import leven from 'leven';
 
 interface FightProps {
+  id: string;
   onStepChange: (current: number) => void;
 }
 
-const Fight: React.FC<FightProps> = ({ onStepChange }) => {
+const Fight: React.FC<FightProps> = ({ id, onStepChange }) => {
   const { message } = App.useApp();
   const [request, loading] = useRequest();
 
-  const [gangUsers] = useLocalStorage<GangUser[]>('GANG_USERS', []);
+  const [gangUsers] = useLocalStorage<GangUser[]>(`${id}_GANG_USERS`, []);
   const [fightNames, setFightNames] = useLocalStorage<string[]>(
-    'FIGHT_NAMES',
+    `${id}_FIGHT_NAMES`,
     []
   );
 

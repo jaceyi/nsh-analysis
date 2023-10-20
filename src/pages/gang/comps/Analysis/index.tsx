@@ -15,16 +15,17 @@ const getTextContent = (text: string, payload?: object) => ({
 });
 
 interface FightProps {
+  id: string;
   onStepChange: (current: number) => void;
 }
 
-const Analysis: React.FC<FightProps> = ({ onStepChange }) => {
+const Analysis: React.FC<FightProps> = ({ id, onStepChange }) => {
   const [gangUsers, setGangUsers] = useLocalStorage<GangUser[]>(
-    'GANG_USERS',
+    `${id}_GANG_USERS`,
     []
   );
   const [fightNames, setFightNames] = useLocalStorage<string[]>(
-    'FIGHT_NAMES',
+    `${id}_FIGHT_NAMES`,
     []
   );
 
@@ -72,18 +73,13 @@ const Analysis: React.FC<FightProps> = ({ onStepChange }) => {
       message.warning('请选择日期');
       return;
     }
-    const gangName = '揽风月';
     const [err, data] = await request<{ url: string }>('/analysis/create', {
+      parent: {
+        database_id: id
+      },
       properties: {
         名称: {
-          title: [
-            getTextContent(
-              `${gangName}${date.format('YYYY年MM月DD日')}帮战分析`
-            )
-          ]
-        },
-        帮派: {
-          rich_text: [getTextContent(gangName)]
+          title: [getTextContent(`${date.format('YYYY年M月D日')}帮战`)]
         },
         日期: {
           date: {
@@ -132,7 +128,7 @@ const Analysis: React.FC<FightProps> = ({ onStepChange }) => {
                     [getTextContent(item.work)],
                     [getTextContent(String(item.number))],
                     [getTextContent(item.day)],
-                    [getTextContent(item.status ? '✅' : '❌')]
+                    [getTextContent(item.status ? '参加' : '')]
                   ]
                 }
               }))
@@ -214,7 +210,7 @@ const Analysis: React.FC<FightProps> = ({ onStepChange }) => {
           }
         ]}
       />
-      <div>
+      <div style={{ marginBottom: 16 }}>
         <div>
           <span>日期：</span>
           <DatePicker
@@ -225,7 +221,7 @@ const Analysis: React.FC<FightProps> = ({ onStepChange }) => {
           />
         </div>
       </div>
-      <div className="flex-justify-center" style={{ margin: '16px 0' }}>
+      <div className="flex-justify-center">
         <Space>
           <Button onClick={() => onStepChange(1)}>上一步</Button>
           <Button
@@ -239,8 +235,8 @@ const Analysis: React.FC<FightProps> = ({ onStepChange }) => {
         </Space>
       </div>
       {exportUrl && (
-        <div className="flex-justify-center">
-          <a href={exportUrl} target="_blank" rel="noopener noreferrer">
+        <div style={{ margin: '16px 20px' }} className="flex-justify-center">
+          <a target="_blank" rel="noopener noreferrer" href={exportUrl}>
             点此查看导出内容
           </a>
         </div>

@@ -1,4 +1,3 @@
-/* eslint-disable no-undef */
 import 'dotenv/config';
 import express from 'express';
 import notion from './app/notion.js';

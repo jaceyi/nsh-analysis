@@ -16,12 +16,13 @@ axiosInstance.interceptors.response.use(
     } else {
       const message = `${data.code}: ${data.message}`;
       res.data = [new Error(message), data.data, res];
-      alert(message);
     }
     return res;
   },
   err => {
-    alert(err.message);
+    if (!axios.isCancel(err)) {
+      alert(err.message);
+    }
     return {
       status: 200,
       statusText: 'Error transformed OK',

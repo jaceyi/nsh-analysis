@@ -18,14 +18,15 @@ export interface GangUser {
 const POSITIONS = ['血河', '神相', '碎梦', '九灵', '素问', '铁衣'];
 
 interface GangProps {
+  id: string;
   onStepChange: (current: number) => void;
 }
 
-const Gang: React.FC<GangProps> = ({ onStepChange }) => {
+const Gang: React.FC<GangProps> = ({ id, onStepChange }) => {
   const { message } = App.useApp();
   const [request, loading] = useRequest();
 
-  const [users, setUsers] = useLocalStorage<GangUser[]>('GANG_USERS', []);
+  const [users, setUsers] = useLocalStorage<GangUser[]>(`${id}_GANG_USERS`, []);
 
   const transform = debounce(async (fileList: RcFile[]) => {
     const base64List = await fileListToBase64List(fileList);

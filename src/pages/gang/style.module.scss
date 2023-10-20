@@ -1,0 +1,48 @@
+.text {
+  width: 100%;
+  text-align: center;
+  padding: 180px 0 90px;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+  overflow: hidden;
+  position: relative;
+
+  .link {
+    position: absolute;
+    right: 16px;
+    top: 10px;
+  }
+
+  .name {
+    margin: 20px 0 10px;
+    text-align: center;
+    font-size: 18px;
+    color: #363636;
+  }
+
+  .steps {
+    display: flex;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .content {
+    margin-top: 10px;
+    padding: 10px;
+  }
+}
+
+.wrap {
+  margin: 10px 0;
+
+  tr {
+    td:first-child {
+      font-weight: 800;
+    }
+  }
+}
