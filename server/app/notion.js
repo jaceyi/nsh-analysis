@@ -5,7 +5,9 @@ import RequestUtils from '../utils/RequestUtils.js';
 
 const router = express.Router();
 
-const { NOTION_API_KEY, NOTION_DATABASE_ID } = env;
+const { NOTION_API_KEY } = env;
+
+const NOTION_DATABASE_ID = '619d186c141843959512c83b13f9ec9d';
 
 const { axiosInstance, request } = RequestUtils.createRequest({
   baseURL: 'https://api.notion.com/v1',
