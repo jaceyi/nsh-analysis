@@ -6,6 +6,7 @@ import { GangUser } from '../Gang';
 import leven from 'leven';
 import { tableSorter } from '@/utils';
 import type { Dayjs } from 'dayjs';
+import { toPng } from 'html-to-image';
 
 const getTextContent = (text: string, payload?: object) => ({
   text: {
@@ -143,6 +144,23 @@ const Analysis: React.FC<FightProps> = ({ id, onStepChange }) => {
     }
   };
 
+  const handleExportPNG = async () => {
+    if (!date) {
+      message.warning('请选择日期');
+      return;
+    }
+    const dataUrl = await toPng(
+      document.querySelector('.ant-table') as HTMLElement,
+      {
+        quality: 0.95
+      }
+    );
+    const link = document.createElement('a');
+    link.download = `${date?.format('YYYY-MM-DD')}帮战.png`;
+    link.href = dataUrl;
+    link.click();
+  };
+
   return (
     <div>
       <div className="flex-justify-center">
@@ -160,6 +178,17 @@ const Analysis: React.FC<FightProps> = ({ id, onStepChange }) => {
       </div>
       <Table
         title={() => <p>{`当前总计${total}人，参与帮战${fightTotal}人`}</p>}
+        footer={() => (
+          <div>
+            <span>日期：</span>
+            <DatePicker
+              value={date}
+              onChange={setDate}
+              style={{ width: 150 }}
+              placement="bottomRight"
+            />
+          </div>
+        )}
         className={styles.wrap}
         size="small"
         dataSource={dataSource}
@@ -210,20 +239,16 @@ const Analysis: React.FC<FightProps> = ({ id, onStepChange }) => {
           }
         ]}
       />
-      <div style={{ marginBottom: 16 }}>
-        <div>
-          <span>日期：</span>
-          <DatePicker
-            value={date}
-            onChange={setDate}
-            style={{ width: 150 }}
-            placement="bottomRight"
-          />
-        </div>
-      </div>
       <div className="flex-justify-center">
         <Space>
           <Button onClick={() => onStepChange(1)}>上一步</Button>
+          <Button
+            loading={loading}
+            disabled={!dataSource.length}
+            onClick={handleExportPNG}
+          >
+            导出为图片
+          </Button>
           <Button
             type="primary"
             loading={loading}

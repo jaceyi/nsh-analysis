@@ -15,7 +15,7 @@ export interface GangUser {
   online: string;
 }
 
-const POSITIONS = ['血河', '神相', '碎梦', '九灵', '素问', '铁衣'];
+const POSITIONS = ['血河', '神相', '碎梦', '九灵', '素问', '铁衣', '龙吟'];
 
 interface GangProps {
   id: string;
