@@ -7,7 +7,7 @@ import Fight from './comps/Fight';
 import Analysis from './comps/Analysis';
 import { useParams } from 'react-router';
 
-interface GangInfo {
+export interface GangInfo {
   title: string;
   url: string;
 }
@@ -82,7 +82,7 @@ const Home = () => {
         ]}
       />
       <div className={styles.content}>
-        <Component id={id!} onStepChange={setStep} />
+        <Component id={id!} onStepChange={setStep} gangInfo={gangInfo} />
       </div>
     </div>
   );

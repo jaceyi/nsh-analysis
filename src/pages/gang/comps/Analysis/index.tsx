@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import { Button, Table, Space, Tag, DatePicker, App } from 'antd';
+import React, { useMemo, useRef, useState } from 'react';
+import { Button, Table, Space, Tag, DatePicker, App, Drawer } from 'antd';
 import styles from '../../style.module.scss';
 import { useLocalStorage, useRequest } from '@/hooks';
 import { GangUser } from '../Gang';
@@ -7,6 +7,8 @@ import leven from 'leven';
 import { tableSorter } from '@/utils';
 import type { Dayjs } from 'dayjs';
 import { toPng } from 'html-to-image';
+import { ColumnsType } from 'antd/es/table';
+import { GangInfo } from '../..';
 
 const getTextContent = (text: string, payload?: object) => ({
   text: {
@@ -18,9 +20,10 @@ const getTextContent = (text: string, payload?: object) => ({
 interface FightProps {
   id: string;
   onStepChange: (current: number) => void;
+  gangInfo: GangInfo;
 }
 
-const Analysis: React.FC<FightProps> = ({ id, onStepChange }) => {
+const Analysis: React.FC<FightProps> = ({ id, onStepChange, gangInfo }) => {
   const [gangUsers, setGangUsers] = useLocalStorage<GangUser[]>(
     `${id}_GANG_USERS`,
     []
@@ -59,7 +62,8 @@ const Analysis: React.FC<FightProps> = ({ id, onStepChange }) => {
           user.fightName = active;
         }
         return user;
-      });
+      })
+      .sort((a, b) => a.status - b.status);
   }, [gangUsers, fightNames]);
 
   const total = dataSource.length;
@@ -149,17 +153,60 @@ const Analysis: React.FC<FightProps> = ({ id, onStepChange }) => {
       message.warning('请选择日期');
       return;
     }
-    const dataUrl = await toPng(
-      document.querySelector('.ant-table') as HTMLElement,
-      {
-        quality: 0.95
-      }
-    );
+    const dataUrl = await toPng(exportWrapper.current!, {
+      quality: 0.95
+    });
     const link = document.createElement('a');
     link.download = `${date?.format('YYYY-MM-DD')}帮战.png`;
     link.href = dataUrl;
     link.click();
   };
+  (window as any).handleExportPNG = handleExportPNG;
+
+  const exportWrapper = useRef<HTMLDivElement>(null);
+
+  const columns: ColumnsType<(typeof dataSource)[0]> = [
+    {
+      title: '人员',
+      dataIndex: 'gangName',
+      render: (t, { status, fightName }) => {
+        return (
+          <span>
+            {t}
+            {status === 2 && <span className="gray">（{fightName}）</span>}
+          </span>
+        );
+      }
+    },
+    {
+      title: '职业',
+      dataIndex: 'work',
+      width: 46
+    },
+    {
+      title: '入帮时间',
+      dataIndex: 'day',
+      align: 'right',
+      width: 90,
+      sorter: tableSorter('day')
+    },
+    {
+      title: '帮战',
+      dataIndex: 'status',
+      align: 'right',
+      width: 60,
+      sorter: tableSorter('status'),
+      render: t =>
+        t ? (
+          <Tag
+            color={t === 1 ? 'success' : 'warning'}
+            style={{ marginRight: 0 }}
+          >
+            ✓
+          </Tag>
+        ) : null
+    }
+  ];
 
   return (
     <div>
@@ -178,68 +225,23 @@ const Analysis: React.FC<FightProps> = ({ id, onStepChange }) => {
       </div>
       <Table
         title={() => <p>{`当前总计${total}人，参与帮战${fightTotal}人`}</p>}
-        footer={() => (
-          <div>
-            <span>日期：</span>
-            <DatePicker
-              value={date}
-              onChange={setDate}
-              style={{ width: 150 }}
-              placement="bottomRight"
-            />
-          </div>
-        )}
         className={styles.wrap}
         size="small"
         dataSource={dataSource}
         pagination={false}
         rowKey="gangName"
-        columns={[
-          {
-            title: '人员',
-            dataIndex: 'gangName',
-            render: (t, { status, fightName }) => {
-              return (
-                <span>
-                  {t}
-                  {status === 2 && (
-                    <span className="gray">（{fightName}）</span>
-                  )}
-                </span>
-              );
-            }
-          },
-          {
-            title: '职业',
-            dataIndex: 'work',
-            width: 46
-          },
-          {
-            title: '入帮时间',
-            dataIndex: 'day',
-            align: 'right',
-            width: 90,
-            sorter: tableSorter('day')
-          },
-          {
-            title: '帮战',
-            dataIndex: 'status',
-            align: 'right',
-            width: 60,
-            sorter: tableSorter('status'),
-            render: t =>
-              t ? (
-                <Tag
-                  color={t === 1 ? 'success' : 'warning'}
-                  style={{ marginRight: 0 }}
-                >
-                  ✓
-                </Tag>
-              ) : null
-          }
-        ]}
+        columns={columns}
       />
-      <div className="flex-justify-center">
+      <div style={{ marginBottom: 20 }}>
+        <span>日期：</span>
+        <DatePicker
+          value={date}
+          onChange={setDate}
+          style={{ width: 150 }}
+          placement="bottomRight"
+        />
+      </div>
+      <div className="flex-justify-center" style={{ marginBottom: 20 }}>
         <Space>
           <Button onClick={() => onStepChange(1)}>上一步</Button>
           <Button
@@ -266,6 +268,27 @@ const Analysis: React.FC<FightProps> = ({ id, onStepChange }) => {
           </a>
         </div>
       )}
+      {/* export element */}
+      <div style={{ margin: -10, height: 0, overflow: 'hidden' }}>
+        <div
+          style={{ padding: '20px 6px 22px', backgroundColor: '#fff' }}
+          ref={exportWrapper}
+        >
+          <div style={{ textAlign: 'center' }}>
+            <h2 style={{ marginBottom: 6 }}>{gangInfo.title}</h2>
+            <p>{`${date?.format('YYYY-MM-DD')}帮战`}</p>
+            <p>{`当前总计${total}人，参与帮战${fightTotal}人`}</p>
+          </div>
+          <Table
+            className={styles.wrap}
+            size="small"
+            dataSource={dataSource}
+            pagination={false}
+            rowKey="gangName"
+            columns={columns}
+          />
+        </div>
+      </div>
     </div>
   );
 };
