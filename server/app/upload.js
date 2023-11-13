@@ -4,7 +4,7 @@ import fs from 'fs';
 import RequestUtils from '../utils/RequestUtils.js';
 
 const router = express.Router();
-const BASEPATH = '../public/uploads';
+const BASEPATH = '../files';
 const storage = multer.diskStorage({
   destination: BASEPATH,
   filename(req, file, callback) {
