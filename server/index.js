@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import express from 'express';
+import upload from './app/upload.js';
 import notion from './app/notion.js';
 import ocr from './app/ocr.js';
 
@@ -9,6 +10,9 @@ app.use(
     limit: '10mb'
   })
 );
+app.use(express.urlencoded({ extended: true }));
+
+app.use(upload);
 app.use(notion);
 app.use(ocr);
 

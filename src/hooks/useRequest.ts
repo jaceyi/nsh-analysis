@@ -77,7 +77,7 @@ const useRequest = (inputs: any[] = []) => {
   async function request<T = any>(
     url: string,
     data?: object,
-    config?: object
+    config?: AxiosRequestConfig
   ): Promise<InterceptAxiosResponse<T>> {
     // 规定组件内所有请求都通过 此方法来发送以便维护
     !loading && setLoading(true);

@@ -25,6 +25,15 @@ export default class RequestUtils {
     };
   }
 
+  static send(res, data) {
+    res.status(200).send(
+      JSON.stringify({
+        code: 0,
+        data
+      })
+    );
+  }
+
   /**
    * @param {object} res Express Response object
    * @param {number} code Error code
@@ -41,15 +50,6 @@ export default class RequestUtils {
         code,
         message,
         error
-      })
-    );
-  }
-
-  static send(res, data) {
-    res.status(200).send(
-      JSON.stringify({
-        code: 0,
-        data
       })
     );
   }
