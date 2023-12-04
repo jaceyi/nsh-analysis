@@ -6,13 +6,10 @@ import Gang from './comps/Gang';
 import Fight from './comps/Fight';
 import Analysis from './comps/Analysis';
 import { useParams } from 'react-router';
+import { GangRetrieveResponse } from '@/types/response';
 
 export interface GangInfo {
   title: string;
-  url: string;
-}
-interface RetrieveResponse {
-  title: any[];
   url: string;
 }
 const Home = () => {
@@ -21,7 +18,7 @@ const Home = () => {
   const [gangInfo, setGangInfo] = useState<GangInfo | null>(null);
   useEffect(() => {
     (async () => {
-      const [err, data] = await request<RetrieveResponse>(
+      const [err, data] = await request<GangRetrieveResponse>(
         '/analysis/retrieve',
         { id }
       );

@@ -1,45 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import axios, { AxiosRequestConfig, AxiosResponse, Canceler } from 'axios';
+import axios, { AxiosRequestConfig, Canceler } from 'axios';
 import useDidUpdate from '@/hooks/useDidUpdate';
-
-const axiosInstance = axios.create({
-  method: 'POST',
-  baseURL: '/api/'
-});
-
-// custom interceptors
-axiosInstance.interceptors.response.use(
-  res => {
-    const { data } = res;
-    if (data.code === 0) {
-      res.data = [null, data.data, res];
-    } else {
-      const message = `${data.code}: ${data.message}`;
-      res.data = [new Error(message), data.data, res];
-    }
-    return res;
-  },
-  err => {
-    if (!axios.isCancel(err)) {
-      alert(err.message);
-    }
-    return {
-      status: 200,
-      statusText: 'Error transformed OK',
-      config: err.config,
-      headers: err.response?.headers,
-      data: [err, err.response?.data]
-    };
-  }
-);
-
-type InterceptAxiosResponse<T> =
-  | [Error, T?, AxiosResponse<T>?]
-  | [null, T, AxiosResponse<T>];
-// custom request
-const clientRequest = async <T = any>(config: AxiosRequestConfig) => {
-  return (await axiosInstance<InterceptAxiosResponse<T>>(config)).data;
-};
+import axiosRequest, { InterceptAxiosResponse } from '@/utils/request';
+import { URLResponseMap } from '@/types/response';
 
 const COMPONENT_UPDATE_MESSAGE = 'component update';
 const COMPONENT_UNMOUNT_MESSAGE = 'component unmount';
@@ -74,16 +37,16 @@ const useRequest = (inputs: any[] = []) => {
     }
   };
 
+  // 规定所有组件内的请求都通过 此方法来发送以便维护
   async function request<T = any>(
     url: string,
     data?: object,
     config?: AxiosRequestConfig
-  ): Promise<InterceptAxiosResponse<T>> {
-    // 规定组件内所有请求都通过 此方法来发送以便维护
+  ) {
     !loading && setLoading(true);
 
     const _id = Math.random().toString(36).substring(2);
-    const [error, response] = await clientRequest<T>(
+    const [error, response] = await axiosRequest<T>(
       Object.assign({ data, url }, config, {
         cancelToken: new axios.CancelToken(cancel => {
           requests.current[_id] = cancel;
@@ -98,6 +61,7 @@ const useRequest = (inputs: any[] = []) => {
 
     delete requests.current[_id];
     if (Object.keys(requests.current).length === 0) {
+      // 当前没有请求时结束 loading 状态
       setLoading(false);
     }
 

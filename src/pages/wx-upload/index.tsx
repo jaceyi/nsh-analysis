@@ -1,15 +1,31 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Upload, Button } from 'antd';
 import styles from './style.module.scss';
 import { useRequest } from '@/hooks';
 import { RcFile } from 'antd/es/upload';
 import { useParams } from 'react-router';
+import { GangRetrieveResponse } from '@/types/response';
 
 const WXUpload = () => {
   const { id } = useParams();
-  const [imgSrc, setImgSrc] = useState('');
+  const [imgSrc, setImgSrc] = useState(
+    () => `/files/619d186c141843959512c83b13f9ec9d.jpg?${new Date().getTime()}`
+  );
 
-  const [request, loading] = useRequest();
+  const [request, loading] = useRequest([id]);
+  const [gangName, setGangName] = useState<string>('');
+  useEffect(() => {
+    (async () => {
+      const [err, data] = await request<GangRetrieveResponse>(
+        '/analysis/retrieve',
+        { id }
+      );
+      if (!err) {
+        setGangName(data.title.map(item => item.plain_text).join(''));
+      }
+    })();
+  }, [id]);
+
   const beforeUpload = async (file: RcFile) => {
     const formData = new FormData();
     formData.append('file', file);
@@ -24,6 +40,7 @@ const WXUpload = () => {
 
   return (
     <div className={styles.container}>
+      <div className={styles.title}>{gangName}微信群二维码</div>
       <Upload
         multiple
         accept="image/*"
