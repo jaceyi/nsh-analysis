@@ -9,7 +9,7 @@ import { GangRetrieveResponse } from '@/types/response';
 const WXUpload = () => {
   const { id } = useParams();
   const [imgSrc, setImgSrc] = useState(
-    () => `/files/619d186c141843959512c83b13f9ec9d.jpg?${new Date().getTime()}`
+    () => `/files/${id}.jpg?${new Date().getTime()}`
   );
 
   const [request, loading] = useRequest([id]);
@@ -40,7 +40,7 @@ const WXUpload = () => {
 
   return (
     <div className={styles.container}>
-      <div className={styles.title}>{gangName}微信群二维码</div>
+      <div className={styles.title}>{gangName}</div>
       <Upload
         multiple
         accept="image/*"
@@ -48,7 +48,7 @@ const WXUpload = () => {
         beforeUpload={beforeUpload}
       >
         <Button type="primary" loading={loading}>
-          上传最新微信群图片
+          上传图片
         </Button>
       </Upload>
       <img className={styles.preview} src={imgSrc} />

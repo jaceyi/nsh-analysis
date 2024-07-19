@@ -2,7 +2,6 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import axios, { AxiosRequestConfig, Canceler } from 'axios';
 import useDidUpdate from '@/hooks/useDidUpdate';
 import axiosRequest, { InterceptAxiosResponse } from '@/utils/request';
-import { URLResponseMap } from '@/types/response';
 
 const COMPONENT_UPDATE_MESSAGE = 'component update';
 const COMPONENT_UNMOUNT_MESSAGE = 'component unmount';
